@@ -13,11 +13,12 @@
 -export([start/0]).
 
 start() ->
-  spawn(fun doubler/0).
+  Pid = spawn(fun double/0),
+  register(double,Pid).
 
-doubler() ->
+double() ->
   receive
-    {Number, Pid} ->
-      Pid ! Number * 2,
-      doubler()
+    {Pid, Ref, N} ->
+      Pid ! {Ref, N * 2},
+      double()
   end.
