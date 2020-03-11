@@ -12,23 +12,22 @@
 %% API
 -export([start/0]).
 
+
 start() ->
   Pid = double:start(),
   io:format("Hello: ~p", [Pid]),
-  on_error(Pid, fun(Pid, Why) ->
-    io:format("pid: ~p failed with error: ~p - ~n", [Pid, Why])
-                end).
+  on_error(Pid, fun(Pid_monitor, Why) -> io:format("pid: ~p failed with error: ~p~n", [Pid_monitor, Why]) end).
 
-on_error(Pid, On_Error) ->
-  spawn(fun() ->
-    Reference = monitor(process, Pid),
-    io:format("Reference ~p", [Reference]),
+on_error(Pid, On_error) ->
+  spawn(fun() -> Reference = monitor(process, Pid),
+    io:format("Reference: ~p", [Reference]),
     receive
-      {'DOWN', Reference, process, _Pid, Why} ->
+      {'DOWN', Reference, process, Pid, Why} ->
         demonitor(Reference),
-        On_Error(Pid, Why),
-        unregister(double),
-        io:format("I(parent my worker ~p died(~p) with reason: ~n", [Pid, Why]),
+        On_error(Pid, Why),
+        io:format("I (parent) My worker ~p died (~p)~n", [Pid, Why]),
+        timer:sleep(10000),
         start()
+
     end
         end).
