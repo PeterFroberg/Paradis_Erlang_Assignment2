@@ -41,7 +41,7 @@ bank(Accounts) ->
               Pid ! {Ref, insufficient_funds},
               bank(Accounts);
             true ->
-              Pid ! {Ref, NewBalanace},
+              Pid ! {Ref, {ok,NewBalanace}},
               bank(maps:update(Account, NewBalanace, Accounts))
           end
       end,
@@ -50,11 +50,11 @@ bank(Accounts) ->
       Pid ! {Ref, maps:get(Account, NewAccounts)},
       bank(NewAccounts);
   %%Lend
-    {Pid, Ref, From, To, Amount} when not is_map_key(From, Accounts) and not is_map_key(To, Accounts) ->
+    {Pid, Ref, From, To, _Amount} when not is_map_key(From, Accounts) and not is_map_key(To, Accounts) ->
       Pid ! {Ref,{no_account, both}},
       bank(Accounts);
 
-    {Pid, Ref, From, To, Amount} when not is_map_key(From, Accounts) or not is_map_key(To, Accounts) ->
+    {Pid, Ref, From, To, _Amount} when not is_map_key(From, Accounts) or not is_map_key(To, Accounts) ->
       case is_map_key(From, Accounts) of
         false ->
           Pid ! {Ref,{no_account, From}};
@@ -98,7 +98,7 @@ withdraw(Pid, Account, Amount) ->
   Pid ! {self(), Ref, Account, Amount, withdraw},
   receive
     {Ref, NewAmount} ->
-      {ok, NewAmount}
+      NewAmount
   end.
 
 lend(Pid, From, To, Amount) ->
