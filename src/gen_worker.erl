@@ -58,6 +58,7 @@ stop(_Pid) ->
   ok.
 
 async(Pid, W) ->
+  io:format("async ~p  ",[W]),
   Ref = make_ref(),
   Pid ! {self(), Ref, {request, W}},
   Ref.
@@ -67,7 +68,7 @@ await(Ref) ->
   receive
     {response, Ref, Response} ->
       Response;
-    {A,B,C} ->
+    {response,B,C} ->
       io:format("~p",[B])
   end.
 

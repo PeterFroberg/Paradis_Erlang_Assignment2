@@ -26,7 +26,12 @@ unordered(F, List, _MaxWorkers) ->
 
 ordered(Fun, List) ->
   WorkPool = gen_worker:start(?MODULE, 2),
-  Refs = [gen_worker:async(WorkPool, {Fun, I}) || I <- List],
+  io:format("~p",[WorkPool]),
+  Refs = [gen_worker:async((fun() -> WorkPool ! self(),
+    receive
+      {Pid} ->
+        Pid
+    end end), {Fun, I}) || I <- List],
   Result = gen_worker:await_all(Refs),
   Result.
 
