@@ -81,8 +81,10 @@ balance(Pid, Account) ->
   Ref = make_ref(),
   Pid ! {self(), Ref, Account},
   receive
+    {Ref, no_account} ->
+      no_account;
     {Ref, Balance} ->
-      Balance
+      {ok,Balance}
   end.
 
 deposit(Pid, Account, Amount) ->

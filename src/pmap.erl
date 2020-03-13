@@ -10,7 +10,8 @@
 -author("Peter").
 
 %% API
--export([unordered/2, unordered/3, ordered/3]).
+-export([unordered/2, unordered/3, ordered/2 ,ordered/3, handle_work/1]).
+-behavior(gen_worker).
 
 unordered(F, List) ->
   [spawn_worker(F,I) || I <- List],
@@ -23,9 +24,14 @@ unordered(F, List, MaxWorkers) when MaxWorkers < length(List)->
 unordered(F, List, _MaxWorkers) ->
   unordered(F, List).
 
-ordered(F, List) ->
-  Pids = [spawn_worker(F, I) || I <- List],
-  gatherOrdered(Pids).
+ordered(Fun, List) ->
+  WorkPool = gen_worker:start(?MODULE, 2),
+  Refs = [gen_worker:async(WorkPool, {Fun, I}) || I <- List],
+  Result = gen_worker:await_all(Refs),
+  Result.
+
+  %%Pids = [spawn_worker(F, I) || I <- List],
+  %%gatherOrdered(Pids).
 
 ordered(F, List, MaxWorkers) when MaxWorkers < length(List) ->
   {H,T} = lists:split(MaxWorkers, List),
@@ -62,3 +68,6 @@ gatherOrdered([Pid|Pids]) ->
     {Pid, {result, R}} ->
       [R|gatherOrdered(Pids)]
   end.
+
+handle_work({Fun, I}) ->
+  {result, Fun(I)}.
