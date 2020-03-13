@@ -14,8 +14,18 @@
 
 start() ->
   Pid = spawn(fun() -> bank(#{}) end),
-  register(bank, Pid),
+  on_error(Pid),
   Pid.
+
+on_error(Pid) ->
+  spawn(fun() -> Reference = monitor(process, Pid),
+    receive
+      {'DOWN', Reference, process, Pid, _Why} ->
+        demonitor(Reference),
+        unregister(bank),
+        no_bank
+    end
+        end).
 
 bank(Accounts) ->
   receive
@@ -51,7 +61,7 @@ bank(Accounts) ->
       bank(NewAccounts);
   %%Lend
     {Pid, Ref, From, To, _Amount} when not is_map_key(From, Accounts) and not is_map_key(To, Accounts) ->
-      Pid ! {Ref,{no_account, both}},
+      Pid ! {Ref,{no_account,both}},
       bank(Accounts);
 
     {Pid, Ref, From, To, _Amount} when not is_map_key(From, Accounts) or not is_map_key(To, Accounts) ->

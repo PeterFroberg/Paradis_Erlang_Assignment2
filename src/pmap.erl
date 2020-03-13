@@ -60,14 +60,14 @@ gather(Index) ->
       [R|gather(Index -1)]
   end.
 
-gatherOrdered([]) ->
-  [];
-
-gatherOrdered([Pid|Pids]) ->
-  receive
-    {Pid, {result, R}} ->
-      [R|gatherOrdered(Pids)]
-  end.
+%%gatherOrdered([]) ->
+%%  [];
+%%
+%%gatherOrdered([Pid|Pids]) ->
+%%  receive
+%%    {Pid, {result, R}} ->
+%%      [R|gatherOrdered(Pids)]
+%%  end.
 
 handle_work({Fun, I}) ->
   {result, Fun(I)}.

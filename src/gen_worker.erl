@@ -20,13 +20,33 @@ start(_Callback, 0) ->
   [];
 
 start(Callback, Max) ->
-  spawn(fun () ->
+  Pid = spawn(fun () -> workpool(Callback, Max) end),
+  Pid.
+%%  spawn(fun () ->
+%%    loop(Callback)
+%%    end).
+
+workpool([H|T]) ->
+  receive
+    {Pid} ->
+      Pid ! H,
+      workpool([T|H])
+  end.
+
+workpool(Callback, Max) ->
+  spawn(fun () -> workpool(create_workpool(Callback, Max)) end).
+
+create_workpool(_Callback, 0) ->
+  [];
+create_workpool(Callback, Max) ->
+  [spawn(fun () ->
     loop(Callback)
-    end).
+        end) | create_workpool(Callback, Max -1)].
 
 loop(Callback) ->
   receive
     {From, Ref, {request, Request}}  ->
+      io:format("Loop ~p", [From]),
       case Callback:handle_work(Request) of
         {result, Response} ->
           From ! {response, Ref, Response},
@@ -34,7 +54,7 @@ loop(Callback) ->
       end
   end.
 
-stop(Pid) ->
+stop(_Pid) ->
   ok.
 
 async(Pid, W) ->
@@ -43,9 +63,12 @@ async(Pid, W) ->
   Ref.
 
 await(Ref) ->
+  io:format("await ~p",[self()]),
   receive
     {response, Ref, Response} ->
-      Response
+      Response;
+    {A,B,C} ->
+      io:format("~p",[B])
   end.
 
 await_all([]) ->
@@ -56,5 +79,7 @@ await_all(Refs) ->
 
 %%await(Ref),
   %%await_all(Refs)
+
+
 
 
