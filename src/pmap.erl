@@ -25,9 +25,9 @@ unordered(F, List, _MaxWorkers) ->
   unordered(F, List).
 
 getWorkerPid(WorkPool) ->
-  WorkPool ! self(),
+  WorkPool ! hello,
   receive
-    {Pid} -> Pid
+    Pid -> Pid
   end.
 
 
@@ -36,6 +36,8 @@ getWorkerPid(WorkPool) ->
 ordered(Fun, List) ->
   WorkPool = gen_worker:start(?MODULE, 2),
   io:format("Workpool process: ~p",[WorkPool]),
+  io:format("GetWorked response: ~p" ,[getWorkerPid(WorkPool)]),
+
   Refs = [gen_worker:async(getWorkerPid(WorkPool), {Fun, I}) || I <- List],
 %%  Refs = [gen_worker:async((fun() -> WorkPool ! {self()},
 %%    receive
