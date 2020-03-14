@@ -20,23 +20,30 @@ start(_Callback, 0) ->
   [];
 
 start(Callback, Max) ->
-  Pid = spawn(fun () -> workpool(Callback, Max) end),
-  Pid.
+  Pid = spawn(fun () -> Wpid = workpool(Callback, Max),
+    register(wpid,Wpid)
+        end),
+  io:format(" Start process Pid: ~p \n",[Pid]),
+  io:format(" Worker Wpid: ~p \n",[whereis(wpid)]),
+  whereis(wpid).
 %%  spawn(fun () ->
 %%    loop(Callback)
 %%    end).
 
 workpool([H|T]) ->
-  %%io:format("Workpool: ~p",[H|T]),
+  io:format("Workpool list: ~p ~p",[H,T]),
   receive
-    hello ->
-      io:format("Hello"),
-      hello ! H,
-      workpool([T|H])
+    Pid ->
+      io:format("Pid banged workpool ~p \n", [Pid]),
+      Pid ! H,
+      io:format("WorkerPID sent from Pool ~p \n", [H]),
+      workpool(T++ [H])
   end.
 
 workpool(Callback, Max) ->
-  spawn(fun () -> workpool(create_workpool(Callback, Max)) end).
+  Pid = spawn(fun () -> workpool(create_workpool(Callback, Max)) end),
+  io:format("WoorkPool PID create: ~p \n", [Pid]),
+  Pid.
 
 create_workpool(_Callback, 0) ->
   [];
@@ -48,7 +55,7 @@ create_workpool(Callback, Max) ->
 loop(Callback) ->
   receive
     {From, Ref, {request, Request}}  ->
-      io:format("Loop ~p", [From]),
+      io:format("Loop ~p \n", [From]),
       case Callback:handle_work(Request) of
         {result, Response} ->
           From ! {response, Ref, Response},
@@ -60,18 +67,19 @@ stop(_Pid) ->
   ok.
 
 async(Pid, W) ->
-  io:format("async ~p  ",[W]),
+  io:format("Pid sent to async ~p  \n",[Pid]),
   Ref = make_ref(),
   Pid ! {self(), Ref, {request, W}},
   Ref.
 
 await(Ref) ->
-  io:format("await ~p",[self()]),
+  io:format("await ~p \n",[self()]),
   receive
     {response, Ref, Response} ->
+      %%io:format("Got response"),
       Response;
     {response,B,C} ->
-      io:format("~p",[B])
+      io:format("Await response worng catch: ~p",[B])
   end.
 
 await_all([]) ->

@@ -25,7 +25,9 @@ unordered(F, List, _MaxWorkers) ->
   unordered(F, List).
 
 getWorkerPid(WorkPool) ->
-  WorkPool ! hello,
+  %%io:format("Inside getWorkerPid"),
+  io:format("workpool PID: ~p \n", [WorkPool]),
+  WorkPool ! self(),
   receive
     Pid -> Pid
   end.
@@ -35,10 +37,12 @@ getWorkerPid(WorkPool) ->
 
 ordered(Fun, List) ->
   WorkPool = gen_worker:start(?MODULE, 2),
-  io:format("Workpool process: ~p",[WorkPool]),
-  io:format("GetWorked response: ~p" ,[getWorkerPid(WorkPool)]),
-
-  Refs = [gen_worker:async(getWorkerPid(WorkPool), {Fun, I}) || I <- List],
+  unregister(wpid),
+  io:format("Workpool process: ~p \n",[WorkPool]),
+  WorkerPID = getWorkerPid(WorkPool),
+  %%io:format("GetWorked response: ~p \n" ,[WorkerPID]),
+  Refs = [gen_worker:async(WorkerPID, {Fun, I}) || I <- List],
+  %%Refs = [gen_worker:async(getWorkerPid(WorkPool), {Fun, I}) || I <- List],
 %%  Refs = [gen_worker:async((fun() -> WorkPool ! {self()},
 %%    receive
 %%      {Pid} ->
