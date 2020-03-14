@@ -24,14 +24,24 @@ unordered(F, List, MaxWorkers) when MaxWorkers < length(List)->
 unordered(F, List, _MaxWorkers) ->
   unordered(F, List).
 
+getWorkerPid(WorkPool) ->
+  WorkPool ! self(),
+  receive
+    {Pid} -> Pid
+  end.
+
+
+
+
 ordered(Fun, List) ->
   WorkPool = gen_worker:start(?MODULE, 2),
-  io:format("~p",[WorkPool]),
-  Refs = [gen_worker:async((fun() -> WorkPool ! self(),
-    receive
-      {Pid} ->
-        Pid
-    end end), {Fun, I}) || I <- List],
+  io:format("Workpool process: ~p",[WorkPool]),
+  Refs = [gen_worker:async(getWorkerPid(WorkPool), {Fun, I}) || I <- List],
+%%  Refs = [gen_worker:async((fun() -> WorkPool ! {self()},
+%%    receive
+%%      {Pid} ->
+%%        Pid
+%%    end end), {Fun, I}) || I <- List],
   Result = gen_worker:await_all(Refs),
   Result.
 

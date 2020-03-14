@@ -27,6 +27,7 @@ start(Callback, Max) ->
 %%    end).
 
 workpool([H|T]) ->
+  %%io:format("Workpool: ~p",[H|T]),
   receive
     {Pid} ->
       Pid ! H,
