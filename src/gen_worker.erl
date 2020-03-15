@@ -80,16 +80,17 @@ await(Ref) ->
   receive
     {response, Ref, Response} ->
       %%io:format("Got response"),
-      Response;
-    {response,B,C} ->
-      io:format("Await response worng catch: ~p",[B])
+      Response
+    %%{response,B,C} ->
+     %% io:format("Await response worng catch: ~p \n",[B])
   end.
 
 await_all([]) ->
   [];
 
 await_all(Refs) ->
-  [await(Ref) || Ref <- Refs].
+  io:format("Await_all Refs: ~p \n", [Refs]),
+  [await(Ref) || Ref <- lists:reverse(Refs)].
 
 %%await(Ref),
   %%await_all(Refs)

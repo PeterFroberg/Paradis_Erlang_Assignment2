@@ -48,7 +48,7 @@ ordered(Fun, List) ->
   unregister(wpid),
   io:format("Workpool process: ~p \n",[WorkPool]),
   Refs = getWorkerPid(WorkPool, List, Fun, []),
-  io:format("Returnd from getWorkerPid: ~p",[Refs]),
+  io:format("Returnd from getWorkerPid: ~p \n",[Refs]),
   %%io:format("GetWorked response: ~p \n" ,[WorkerPID]),
   %%Refs = [gen_worker:async(WorkerPID, {Fun, I}) || I <- List],
   %%Refs = [gen_worker:async(getWorkerPid(WorkPool), {Fun, I}) || I <- List],
@@ -58,6 +58,7 @@ ordered(Fun, List) ->
 %%        Pid
 %%    end end), {Fun, I}) || I <- List],
   Result = gen_worker:await_all(Refs),
+  io:format("RESULTAT: ~p \n",[Result]),
   Result.
 
   %%Pids = [spawn_worker(F, I) || I <- List],
