@@ -31,11 +31,11 @@ start(Callback, Max) ->
 %%    end).
 
 workpool([H|T]) ->
-  io:format("Workpool list: ~p ~p",[H,T]),
+  io:format("Workpool list: ~p ~p \n",[H,T]),
   receive
-    Pid ->
-      io:format("Pid banged workpool ~p \n", [Pid]),
-      Pid ! H,
+    {Pid, Ref} ->
+      io:format("Pid banged to workpool ~p \n", [Pid]),
+      Pid ! {H, Ref},
       io:format("WorkerPID sent from Pool ~p \n", [H]),
       workpool(T++ [H])
   end.
@@ -58,6 +58,8 @@ loop(Callback) ->
       io:format("Loop ~p \n", [From]),
       case Callback:handle_work(Request) of
         {result, Response} ->
+          io:format("Baning result to : ~p \n",[From]),
+          io:format("Result: ~p \n",[Response]),
           From ! {response, Ref, Response},
           loop(Callback)
       end
@@ -68,6 +70,7 @@ stop(_Pid) ->
 
 async(Pid, W) ->
   io:format("Pid sent to async ~p  \n",[Pid]),
+  io:format("Work sent to Async; ~p \n", [W]),
   Ref = make_ref(),
   Pid ! {self(), Ref, {request, W}},
   Ref.

@@ -24,12 +24,20 @@ unordered(F, List, MaxWorkers) when MaxWorkers < length(List)->
 unordered(F, List, _MaxWorkers) ->
   unordered(F, List).
 
-getWorkerPid(WorkPool) ->
+getWorkerPid(_WorkPool, [], _Fun, Refs) ->
+  Refs;
+
+getWorkerPid(WorkPool, [H|T], Fun, Refs) ->
   %%io:format("Inside getWorkerPid"),
-  io:format("workpool PID: ~p \n", [WorkPool]),
-  WorkPool ! self(),
+  io:format("List to work on: ~p ~p \n", [H, T]),
+  io:format("Refs: ~p \n",[Refs]),
+  Ref = make_ref(),
+  WorkPool ! {self(), Ref},
   receive
-    Pid -> Pid
+    {Pid, Ref} ->
+      NewRef = gen_worker:async(Pid, {H, Fun}),
+      io:format("New Ref: ~p \n", [NewRef]),
+      getWorkerPid(WorkPool, T, Fun, [NewRef|Refs])
   end.
 
 
@@ -39,9 +47,10 @@ ordered(Fun, List) ->
   WorkPool = gen_worker:start(?MODULE, 2),
   unregister(wpid),
   io:format("Workpool process: ~p \n",[WorkPool]),
-  WorkerPID = getWorkerPid(WorkPool),
+  Refs = getWorkerPid(WorkPool, List, Fun, []),
+  io:format("Returnd from getWorkerPid: ~p",[Refs]),
   %%io:format("GetWorked response: ~p \n" ,[WorkerPID]),
-  Refs = [gen_worker:async(WorkerPID, {Fun, I}) || I <- List],
+  %%Refs = [gen_worker:async(WorkerPID, {Fun, I}) || I <- List],
   %%Refs = [gen_worker:async(getWorkerPid(WorkPool), {Fun, I}) || I <- List],
 %%  Refs = [gen_worker:async((fun() -> WorkPool ! {self()},
 %%    receive
@@ -90,5 +99,6 @@ gather(Index) ->
 %%      [R|gatherOrdered(Pids)]
 %%  end.
 
-handle_work({Fun, I}) ->
+handle_work({I, Fun}) ->
+  io:format("Work to handle -Fun, I - : ~p , ~p \n" ,[Fun ,I]),
   {result, Fun(I)}.
