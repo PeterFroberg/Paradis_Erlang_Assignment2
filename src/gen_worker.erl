@@ -21,28 +21,28 @@ start(_Callback, 0) ->
 
 start(Callback, Max) ->
   Pid = spawn(fun () -> Wpid = workpool(Callback, Max),
-    register(wpid,Wpid)
+    register(wpid, Wpid)
         end),
   io:format(" Start process Pid: ~p \n",[Pid]),
-  io:format(" Worker Wpid: ~p \n",[whereis(wpid)]),
+  %%io:format(" Worker Wpid: ~p \n",[whereis(wpid)]),
   whereis(wpid).
 %%  spawn(fun () ->
 %%    loop(Callback)
 %%    end).
 
 workpool([H|T]) ->
-  io:format("Workpool list: ~p ~p \n",[H,T]),
+  %%io:format("Workpool list: ~p ~p \n",[H,T]),
   receive
     {Pid, Ref} ->
-      io:format("Pid banged to workpool ~p \n", [Pid]),
+    %%io:format("Pid banged to workpool ~p \n", [Pid]),
       Pid ! {H, Ref},
-      io:format("WorkerPID sent from Pool ~p \n", [H]),
+      %%io:format("WorkerPID sent from Pool ~p \n", [H]),
       workpool(T++ [H])
   end.
 
 workpool(Callback, Max) ->
   Pid = spawn(fun () -> workpool(create_workpool(Callback, Max)) end),
-  io:format("WoorkPool PID create: ~p \n", [Pid]),
+  %%io:format("WoorkPool PID create: ~p \n", [Pid]),
   Pid.
 
 create_workpool(_Callback, 0) ->
@@ -55,11 +55,11 @@ create_workpool(Callback, Max) ->
 loop(Callback) ->
   receive
     {From, Ref, {request, Request}}  ->
-      io:format("Loop ~p \n", [From]),
+      %%io:format("Loop ~p \n", [From]),
       case Callback:handle_work(Request) of
         {result, Response} ->
-          io:format("Baning result to : ~p \n",[From]),
-          io:format("Result: ~p \n",[Response]),
+         %% io:format("Baning result to : ~p \n",[From]),
+          %%io:format("Result: ~p \n",[Response]),
           From ! {response, Ref, Response},
           loop(Callback)
       end
@@ -69,14 +69,14 @@ stop(_Pid) ->
   ok.
 
 async(Pid, W) ->
-  io:format("Pid sent to async ~p  \n",[Pid]),
-  io:format("Work sent to Async; ~p \n", [W]),
+  %%io:format("Pid sent to async ~p  \n",[Pid]),
+ %% io:format("Work sent to Async; ~p \n", [W]),
   Ref = make_ref(),
   Pid ! {self(), Ref, {request, W}},
   Ref.
 
 await(Ref) ->
-  io:format("await ~p \n",[self()]),
+  %%io:format("await ~p \n",[self()]),
   receive
     {response, Ref, Response} ->
       %%io:format("Got response"),
@@ -89,7 +89,7 @@ await_all([]) ->
   [];
 
 await_all(Refs) ->
-  io:format("Await_all Refs: ~p \n", [Refs]),
+  %%io:format("Await_all Refs: ~p \n", [Refs]),
   [await(Ref) || Ref <- lists:reverse(Refs)].
 
 %%await(Ref),

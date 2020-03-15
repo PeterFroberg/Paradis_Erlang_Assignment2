@@ -24,20 +24,20 @@ unordered(F, List, MaxWorkers) when MaxWorkers < length(List)->
 unordered(F, List, _MaxWorkers) ->
   unordered(F, List).
 
-getWorkerPid(_WorkPool, [], _Fun, Refs) ->
+generateRefs(_WorkPool, [], _Fun, Refs) ->
   Refs;
 
-getWorkerPid(WorkPool, [H|T], Fun, Refs) ->
+generateRefs(WorkPool, [H|T], Fun, Refs) ->
   %%io:format("Inside getWorkerPid"),
-  io:format("List to work on: ~p ~p \n", [H, T]),
-  io:format("Refs: ~p \n",[Refs]),
+%%  io:format("List to work on: ~p ~p \n", [H, T]),
+%%  io:format("Refs: ~p \n",[Refs]),
   Ref = make_ref(),
   WorkPool ! {self(), Ref},
   receive
     {Pid, Ref} ->
       NewRef = gen_worker:async(Pid, {H, Fun}),
-      io:format("New Ref: ~p \n", [NewRef]),
-      getWorkerPid(WorkPool, T, Fun, [NewRef|Refs])
+      %%io:format("New Ref: ~p \n", [NewRef]),
+      generateRefs(WorkPool, T, Fun, [NewRef|Refs])
   end.
 
 
@@ -46,19 +46,20 @@ getWorkerPid(WorkPool, [H|T], Fun, Refs) ->
 ordered(Fun, List) ->
   WorkPool = gen_worker:start(?MODULE, 2),
   unregister(wpid),
-  io:format("Workpool process: ~p \n",[WorkPool]),
-  Refs = getWorkerPid(WorkPool, List, Fun, []),
-  io:format("Returnd from getWorkerPid: ~p \n",[Refs]),
+ %% io:format("Workpool process: ~p \n",[WorkPool]),
+  Refs = generateRefs(WorkPool, List, Fun, []),
+ %% io:format("Returnd from getWorkerPid: ~p \n",[Refs]),
   %%io:format("GetWorked response: ~p \n" ,[WorkerPID]),
   %%Refs = [gen_worker:async(WorkerPID, {Fun, I}) || I <- List],
   %%Refs = [gen_worker:async(getWorkerPid(WorkPool), {Fun, I}) || I <- List],
+
 %%  Refs = [gen_worker:async((fun() -> WorkPool ! {self()},
 %%    receive
 %%      {Pid} ->
 %%        Pid
 %%    end end), {Fun, I}) || I <- List],
   Result = gen_worker:await_all(Refs),
-  io:format("RESULTAT: ~p \n",[Result]),
+ %% io:format("RESULTAT: ~p \n",[Result]),
   Result.
 
   %%Pids = [spawn_worker(F, I) || I <- List],
@@ -101,5 +102,5 @@ gather(Index) ->
 %%  end.
 
 handle_work({I, Fun}) ->
-  io:format("Work to handle -Fun, I - : ~p , ~p \n" ,[Fun ,I]),
+  %%io:format("Work to handle -Fun, I - : ~p , ~p \n" ,[Fun ,I]),
   {result, Fun(I)}.
